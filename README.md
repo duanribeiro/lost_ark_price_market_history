@@ -24,10 +24,9 @@ The objective of this project is a tool that collects information from [Lost Ark
 * Search for the itens you want to collect data and take a screenshot using hotkey `printscreen`
 * Take the screenshots on your steam folder `C:\SteamLibrary\steamapps\common\Lost Ark\EFGame\Screenshots` and move to the new folder `C:\pics`
 
-------------------------------------------------------------------------
 !!! DONT MOVE IN-GAME MARKET WINDOW, THE CODE WILL CROP THE TEXT AND IF YOU MOVE FROM DEFAULT POSITION WILL FAIL !!!
 If you moved the market window for some reason, just switch characters or re-login to make the window on default location.
-------------------------------------------------------------------------
+
 
 ## 4. Run the code
 * Open `LostarkMarketPriceServer.exe`
