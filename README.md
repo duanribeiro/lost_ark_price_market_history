@@ -7,6 +7,7 @@
 The objective of this project is a tool that collects information from [Lost Ark](https://www.playlostark.com/pt-br) game screenshots, interprets the text through 
 [Amazon Rekognition](https://aws.amazon.com/pt/rekognition/) and saves the information in a cloud database to be searched by all players
 
+![antivirus_check](screenshots/running_code.jpg)
 
 
 ## 1. Requirements
@@ -23,7 +24,7 @@ The objective of this project is a tool that collects information from [Lost Ark
 * Search for the itens you want to collect data and take a screenshot using hotkey `printscreen`
 * Take the screenshots on your steam folder `C:\SteamLibrary\steamapps\common\Lost Ark\EFGame\Screenshots` and move to the new folder `C:\pics`
 
------------------------------------------------------
+------------------------------------------------------------------------
 !!! DONT MOVE IN-GAME MARKET WINDOW, THE CODE WILL CROP THE TEXT AND IF YOU MOVE FROM DEFAULT POSITION WILL FAIL !!!
 If you moved the market window for some reason, just switch characters or re-login to make the window on default location.
 ------------------------------------------------------------------------
@@ -35,6 +36,8 @@ If you moved the market window for some reason, just switch characters or re-log
 * **Is this a Virus?**
 
 You can check this .exe file on https://www.virustotal.com/ and the code is here to look, for sure some antivirus will accuse this script as a virus if this happen you can turn off antivirus or just give up.
+![antivirus_check](screenshots/antivirus_check.jpg)
+
 
 * **Can i be banned from Lost Ark?**
 
