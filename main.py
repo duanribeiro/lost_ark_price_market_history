@@ -1,15 +1,44 @@
 import boto3
-import cv2
-import os
+from dotenv import load_dotenv
 from datetime import datetime
 import pytz
-from dotenv import load_dotenv
+import cv2
+import os
+import logging
+import pymongo
+
+mongo_client = pymongo.MongoClient(os.getenv('MONGO_URI'))
+mongo_db = mongo_client["lostark"]
+mongo_collection = mongo_db["prices"]
+
+logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+def is_number(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    return True
+
+
+def split_text_in_chunks(clean_texts):
+    text_chunks = []
+    chunk = []
+    for text in clean_texts:
+        if not is_number(text):
+            if len(text) < 5:
+                continue
+            text_chunks.append(chunk)
+            chunk = [text]
+        else:
+            chunk.append(
+                float(text.replace(',', '.'))
+            )
+
+    return text_chunks
 
 
 def get_created_time(image_path):
@@ -19,11 +48,23 @@ def get_created_time(image_path):
     return image_datetime
 
 
-def detect_text_local_file(image_path, folder_path):
+def detect_text_local_file(client, image_path, folder_path):
     image = cv2.imread(image_path)
-    cropped_image = image[220:690, 310:1350]
-    cv2.imwrite(f'{folder_path}\\cropped.jpg', cropped_image)
+    height, width, channels = image.shape
 
+    if height == 1080 and width == 1920:
+        start_x, end_x = 610, 1630
+        start_y, end_y = 310, 870
+
+    elif height == 900 and width == 1600:
+        start_x, end_x = 510, 1350
+        start_y, end_y = 260, 730
+    else:
+        logger.error(f'Wrong image resolution: {width}x{height}. Only accepts 1920x1080 or 1600x900.')
+        return None
+
+    cropped_image = image[start_y:end_y, start_x:end_x]
+    cv2.imwrite(f'{folder_path}\\cropped.jpg', cropped_image)
     with open(f'{folder_path}\\cropped.jpg', 'rb') as image:
         response = client.detect_text(Image={'Bytes': image.read()})
 
@@ -37,18 +78,22 @@ def save_texts_db(texts, texts_datetime):
         if 'Sold in bundles' not in text['DetectedText']:
             clean_texts.append(text['DetectedText'])
 
-    parsed_text = []
-    for chunk_text in list(chunks(clean_texts, 5)):
+    text_chunks = split_text_in_chunks(clean_texts)
+    for chunk in text_chunks:
+        if len(chunk) != 5:
+            continue
+
+        name, avg_day, recent_price, lowest_price, cheapest_remaning = chunk
         parsed_item = {
-            "name": chunk_text[0],
-            "avg_day": float(chunk_text[1].replace(',', '')),
-            "recent_price": float(chunk_text[2].replace(',', '')),
-            "lowest_price": float(chunk_text[3].replace(',', '')),
-            "cheapest_remaning": float(chunk_text[4].replace(',', '')),
+            "name": name,
+            "avg_day": avg_day,
+            "recent_price": recent_price,
+            "lowest_price": lowest_price,
+            "cheapest_remaning": cheapest_remaning,
             "timestamp": texts_datetime
         }
-        print(parsed_item)
-        parsed_text.append(parsed_item)
+        logger.info(parsed_item)
+        mongo_collection.insert_one(parsed_item)
 
 
 if __name__ == "__main__":
@@ -62,10 +107,23 @@ if __name__ == "__main__":
     )
 
     screenshot_folder = 'C:\\pics'
+    logger.info(f'Starting read images on folder: {screenshot_folder}')
+
+    try:
+        os.listdir(screenshot_folder)
+    except:
+        logger.error(f'Pasta não encontrada: {screenshot_folder}')
+        quit()
+
     for filename in os.listdir(screenshot_folder):
         file_path = os.path.join(screenshot_folder, filename)
+        logger.info(f'Reading image: {filename}')
 
         if '.jpg' in file_path:
             image_datetime = get_created_time(image_path=file_path)
-            detected_texts = detect_text_local_file(image_path=file_path, folder_path=screenshot_folder)
-            save_texts_db(texts=detected_texts, texts_datetime=image_datetime)
+            detected_texts = detect_text_local_file(client=client, image_path=file_path, folder_path=screenshot_folder)
+            if detected_texts:
+                save_texts_db(texts=detected_texts, texts_datetime=image_datetime)
+
+    input("Press any key to exit...")
+
