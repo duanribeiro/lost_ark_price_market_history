@@ -7,7 +7,7 @@ import os
 import logging
 import pymongo
 
-mongo_client = pymongo.MongoClient(os.getenv('MONGO_URI'))
+mongo_client = pymongo.MongoClient('mongodb+srv://duanribeiro:BJ183r32@futebol-iwbwh.mongodb.net/imob?authSource=admin')
 mongo_db = mongo_client["lostark"]
 mongo_collection = mongo_db["prices"]
 
@@ -28,17 +28,17 @@ def split_text_in_chunks(clean_texts):
     text_chunks = []
     chunk = []
     for text in clean_texts:
+        text = text.replace(',', '.')
         if not is_number(text):
-            if len(text) < 5:
-                continue
             text_chunks.append(chunk)
             chunk = [text]
         else:
             chunk.append(
-                float(text.replace(',', '.'))
+                float(text)
             )
+    text_chunks.append(chunk)
 
-    return text_chunks
+    return text_chunks[1:]
 
 
 def get_created_time(image_path):
@@ -54,11 +54,12 @@ def detect_text_local_file(client, image_path, folder_path):
 
     if height == 1080 and width == 1920:
         start_x, end_x = 610, 1630
-        start_y, end_y = 310, 870
+        start_y, end_y = 300, 870
 
     elif height == 900 and width == 1600:
-        start_x, end_x = 510, 1350
-        start_y, end_y = 260, 730
+        start_x, end_x = 505, 1350
+        start_y, end_y = 250, 730
+
     else:
         logger.error(f'Wrong image resolution: {width}x{height}. Only accepts 1920x1080 or 1600x900.')
         return None
@@ -74,11 +75,13 @@ def detect_text_local_file(client, image_path, folder_path):
 
 def save_texts_db(texts, texts_datetime):
     clean_texts = []
+    save_list = []
     for text in texts:
-        if 'Sold in bundles' not in text['DetectedText']:
+        if not any(word in text['DetectedText'] for word in ['Sold in bundles', 'Untradable', 'May be traded']):
             clean_texts.append(text['DetectedText'])
 
     text_chunks = split_text_in_chunks(clean_texts)
+
     for chunk in text_chunks:
         if len(chunk) != 5:
             continue
@@ -93,10 +96,17 @@ def save_texts_db(texts, texts_datetime):
             "timestamp": texts_datetime
         }
         logger.info(parsed_item)
-        mongo_collection.insert_one(parsed_item)
+        has_duplicated = list(mongo_collection.find({'name': parsed_item['name'], 'timestamp': parsed_item['timestamp']}))
+        if not has_duplicated:
+            save_list.append(parsed_item)
+
+    logger.info(f'Itens on page: {len(text_chunks)}')
+    logger.info(f'Itens to be saved: {len(save_list)}')
+    mongo_collection.insert_many(save_list)
 
 
 if __name__ == "__main__":
+    logger.info(f'Starting...')
     load_dotenv()
 
     client = boto3.client(
