@@ -3,3 +3,4 @@ Pillow~=9.2.0
 pytesseract~=0.3.9
 pytz~=2022.1
 PyAutoGUI~=0.9.53
+dnspython~=2.2.1
