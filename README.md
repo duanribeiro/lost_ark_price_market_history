@@ -28,3 +28,4 @@ You will need those tools to run the code:
 * A character lvl 30 to open the market inside game.
 
 ## All-in-One VIDEO TUTORIAL
+[![Watch the video](https://img.youtube.com/vi/scS34fed8yo/maxresdefault.jpg)](https://www.youtube.com/watch?v=scS34fed8yo)
