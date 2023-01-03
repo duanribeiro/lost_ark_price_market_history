@@ -17,7 +17,6 @@ Here is the step-by-step on how it works:
 2. The bot open the market inside game, and starting making clicks need to see all the pages
 3. The bot closes, and all images are processed to get the data
 4. All data is save on a database.
-5. Only working on sceen resolution 1980x1080
 
 
 ## Requirements
@@ -27,6 +26,7 @@ You will need those tools to run the code:
 * [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 * [Python](https://www.python.org/downloads/)
 * A character lvl 30 to open the market inside game.
+* Only working on sceen resolution 1980x1080
 
 ## All-in-One VIDEO TUTORIAL
 [![Watch the video](https://img.youtube.com/vi/scS34fed8yo/maxresdefault.jpg)](https://www.youtube.com/watch?v=scS34fed8yo)
